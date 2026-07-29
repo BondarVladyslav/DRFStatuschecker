@@ -3,14 +3,9 @@ import json
 from django.db import transaction
 
 from .tasks import site_check
-from .models import Site, SiteResponse
-from .serializers import SiteResponseSerializer
+from .models import Site
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
-import time
-import requests
-from CheckSiteOut.celery import app
-from .models import Site, SiteResponse
 
 
 @transaction.atomic

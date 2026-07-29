@@ -1,5 +1,11 @@
 import os
+import sys
+
+from pathlib import Path
 import asyncio
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0,str(BASE_DIR)) 
+                
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CheckSiteOut.settings")
 import django
 django.setup()
@@ -31,12 +37,11 @@ def link_token(token, telegram_id):
     ).update(telegram_id=telegram_id)
     return updated > 0
 
-
-
-
 async def main():
     bot = Bot(BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(router)
     await dp.start_polling(bot)
 
+if __name__ == '__main__':
+    asyncio.run(main())

@@ -8,15 +8,15 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 User = get_user_model()
-
+from rest_framework import status
 class GetTokenApiView(APIView):
     permission_classes = [AllowAny]
-    def get(self, request):
+    def post(self, request):
         token = Token.objects.create(token=secrets.token_urlsafe(32))
         return Response({
             'token': token.token,
             'bot_link': f'https://t.me/CheckSiteOut_bot?start={ token.token }',
-        })
+        }, status=status.HTTP_201_CREATED)
 
 
 class PollTokenApiView(APIView):

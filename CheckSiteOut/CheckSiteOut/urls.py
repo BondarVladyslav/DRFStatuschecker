@@ -16,8 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
-
+from rest_framework_simplejwt.views import TokenRefreshView
+from debug_toolbar.toolbar import debug_toolbar_urls
 from users.views import GetTokenApiView, PollTokenApiView
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,4 +26,4 @@ urlpatterns = [
     path('api/auth/poll/', PollTokenApiView.as_view(), name='auth_poll'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
-]
+] + debug_toolbar_urls()

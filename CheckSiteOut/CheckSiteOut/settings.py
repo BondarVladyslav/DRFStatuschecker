@@ -132,21 +132,30 @@ STATIC_URL = 'static/'
 _auth_classes = [
     "rest_framework_simplejwt.authentication.JWTAuthentication",
 ]
-
+_renderer_classes = [
+        'rest_framework.renderers.JSONRenderer',
+]
 if DEBUG:
     _auth_classes +=[
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
-
+        ]
+    _renderer_classes += [
+        'rest_framework.renderers.BrowsableAPIRenderer'
         ]
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
     ],
-        'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+        'DEFAULT_RENDERER_CLASSES': _renderer_classes,
+    'DEFAULT_THROTTLE_CLASSES':[
+    'rest_framework.throttling.AnonRateThrottle',
+    'rest_framework.throttling.UserRateThrottle',
     ],
+    'DEFAULT_THROTTLE_RATES':{
+        'anon' : '60/hour',
+        'user' : '720/hour'
+    },
     'DEFAULT_AUTHENTICATION_CLASSES':_auth_classes,
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 24,   

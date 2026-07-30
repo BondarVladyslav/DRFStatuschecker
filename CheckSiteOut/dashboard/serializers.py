@@ -10,7 +10,9 @@ class SiteSerializer(ModelSerializer):
     class Meta:
         model = Site
         fields = ['link', 'id']
-
+        extra_kwargs = {
+            'link':{'validators':[]}
+        }
     def validate_link(self, value):
         link = value if value.startswith(('http://', 'https://')) else 'https://' + value
         URLValidator()(link)              

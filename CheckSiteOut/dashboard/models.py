@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 UserModel = get_user_model()
 class Site(models.Model):
     owners = models.ManyToManyField(UserModel, related_name='sites')
-    link = models.TextField()
+    link = models.TextField(unique=True)
 
 class SiteResponse(models.Model):
     site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='responses')

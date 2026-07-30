@@ -9,7 +9,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'cleanup-tokens': {
-        'task': 'users.tasks.cleanup_tokens',
+        'task': 'dashboard.tasks.cleanup_tokens',
         'schedule': crontab(minute=0), 
     },
 }

@@ -42,7 +42,7 @@ class DashBoardViewSet(mixins.CreateModelMixin,
             site.delete()                     
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True)
+    @action(detail=True, methods=['get'])
     def responses(self, request, pk=None):
         site = self.get_object()
         qs = site.responses.all() 

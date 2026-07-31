@@ -19,6 +19,10 @@ def site_check(self, site_id, link):
         start = time.time()
         response = requests.head(link, timeout=10)   
         status_code = response.status_code
+        if status_code == 405:
+            start = time.time()
+            response = requests.get(link, timeout=10)
+            status_code = response.status_code
         response_obj = SiteResponse.objects.create(
             site_id=site_id,
             status_code=status_code,

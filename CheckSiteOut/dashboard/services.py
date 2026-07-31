@@ -36,6 +36,3 @@ def stop_monitoring(site_id):
         name=f'check_site_{site_id}'
     )
     task.delete()
-
-def normalize_link(link):
-    return link if link.startswith(('http://', 'https://')) else 'https://' + link

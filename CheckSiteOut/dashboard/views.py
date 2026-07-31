@@ -3,7 +3,7 @@ from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .services import add_site_for_user, normalize_link, stop_monitoring
+from .services import add_site_for_user, stop_monitoring
 from .serializers import SiteDetailSerializer, SiteSerializer,SiteResponseSerializer
 from .models import Site
 from rest_framework.pagination import PageNumberPagination

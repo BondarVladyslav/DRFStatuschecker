@@ -14,9 +14,10 @@ class SiteResponse(models.Model):
     response_time = models.PositiveSmallIntegerField(null=True, blank=True)      
     error = models.CharField(max_length=100, null=True, blank=True)         
     checked_at = models.DateTimeField(auto_now_add=True)                    
-
+    
     class Meta:
         ordering = ['-checked_at']            
         indexes = [
             models.Index(fields=['site', '-checked_at']),
         ]
+

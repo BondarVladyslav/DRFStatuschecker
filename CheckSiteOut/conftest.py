@@ -14,7 +14,7 @@ def second_user(db):
 
 @pytest.fixture
 def api_client():
-    return APIClient
+    return APIClient()
 
 @pytest.fixture
 def auth_client(user):

@@ -1,11 +1,13 @@
 import json
+from venv import logger
 
 from django.db import transaction
+
+from users.tasks import send_report_message
 
 from .tasks import site_check
 from .models import Site
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
-
 
 
 @transaction.atomic
@@ -15,24 +17,20 @@ def add_site_for_user(*, link, user):
     if created:
         transaction.on_commit(lambda: site_check.delay(site.id, link))
 
-        schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=1,
-            period=IntervalSchedule.MINUTES,
-        )
-
-        PeriodicTask.objects.get_or_create(
-            name=f'check_site_{site.id}',
-            defaults={
-                'interval': schedule,
-                'task': 'dashboard.tasks.site_check',
-                'args': json.dumps([site.id, link]),
-            }
-        )
     return site
 
 
-def stop_monitoring(site_id):
-    task = PeriodicTask.objects.filter(
-        name=f'check_site_{site_id}'
+def alert_all_owners(owners, link, became_avaible, error=None):
+    message = (
+        f"""Your site {link} became avaible"""
+        if became_avaible
+        else f"""Your site {link} responded an error {error}"""
     )
-    task.delete()
+    for owner in owners:
+        try:
+            send_report_message.delay(
+                telegram_id=owner.telegram_id,
+                text=message,
+            )
+        except Exception:
+            logger.exception("Failed sending task for alert for owner", owner.id)

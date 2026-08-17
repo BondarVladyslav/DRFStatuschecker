@@ -14,16 +14,19 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenRefreshView
 from debug_toolbar.toolbar import debug_toolbar_urls
 from users.views import GetTokenApiView, PollTokenApiView
+from rest_framework_simplejwt.views import TokenBlacklistView
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/v1/', include('dashboard.urls')),
-    path('api/auth/start/', GetTokenApiView.as_view(), name='auth_start'),
-    path('api/auth/poll/', PollTokenApiView.as_view(), name='auth_poll'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    
+    path("admin/", admin.site.urls),
+    path("api/v1/", include("dashboard.urls")),
+    path("api/auth/start/", GetTokenApiView.as_view(), name="auth_start"),
+    path("api/auth/poll/", PollTokenApiView.as_view(), name="auth_poll"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/logout/", TokenBlacklistView.as_view(), name="token_blacklist"),
 ] + debug_toolbar_urls()

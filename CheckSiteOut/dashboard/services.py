@@ -1,4 +1,6 @@
+import ipaddress
 import logging
+import socket
 
 from django.db import transaction
 from users.tasks import send_report_message
@@ -34,3 +36,23 @@ def alert_all_owners(owners, link, became_avaible, error=None):
             )
         except Exception:
             logger.exception("Failed sending task for alert for owner %s", owner.id)
+
+
+def check_ip_blocked(host):
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return True
+
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            return True
+    return False

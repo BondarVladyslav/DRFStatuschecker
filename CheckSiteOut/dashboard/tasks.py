@@ -1,5 +1,9 @@
+import ipaddress
 import logging
+import socket
+from urllib.parse import urlsplit
 
+from .services import check_ip_blocked
 from dashboard.services import alert_all_owners
 from users.models import Token
 from datetime import timedelta
@@ -29,12 +33,16 @@ def site_check(self, site_id, link):
     was_ok = not (last and last.error)
 
     try:
+        if check_ip_blocked(urlsplit(link).hostname):
+            SiteResponse.objects.create(site_id=site_id, error="BLOCKED_HOST")
+            return
+
         start = time.time()
         response = requests.head(link, timeout=10)
         status_code = response.status_code
         if status_code == 405:
             start = time.time()
-            response = requests.get(link, timeout=10)
+            response = requests.get(link, timeout=10, allow_redirects=False)
             status_code = response.status_code
         response_obj = SiteResponse.objects.create(
             site_id=site_id,

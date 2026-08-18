@@ -1,5 +1,6 @@
 from datetime import timedelta
-
+from urllib.parse import urlsplit
+from .services import check_ip_blocked
 from django.db.models import Q
 from django.db.models.aggregates import Avg, Count
 from django.utils import timezone
@@ -37,6 +38,9 @@ class SiteSerializer(ModelSerializer):
         link = base + sep + query
 
         URLValidator()(link)
+        hostname = urlsplit(link).hostname
+        if check_ip_blocked(hostname):
+            raise ValidationError("This host is not allowed.")
         return link
 
 

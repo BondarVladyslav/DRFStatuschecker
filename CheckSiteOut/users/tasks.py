@@ -23,9 +23,9 @@ def send_report_message(self, telegram_id, text):
             timeout=10,
         )
         response.raise_for_status()
-    except:
-        logger.log("Lost telegram message for telegram_id %s", telegram_id)
-        self.retry()
+    except requests.RequestException as exc:
+        logger.warning("Lost telegram message for telegram_id %s", telegram_id)
+        raise self.retry(exc=exc)
 
 
 @app.task

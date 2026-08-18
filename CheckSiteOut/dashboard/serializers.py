@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.db.models.aggregates import Avg, Count
 from django.utils import timezone
 from rest_framework.serializers import (
+    CharField,
     ModelSerializer,
     SerializerMethodField,
     ValidationError,
@@ -13,10 +14,11 @@ from django.core.validators import URLValidator
 
 
 class SiteSerializer(ModelSerializer):
+    link = CharField(max_length=255)
+
     class Meta:
         model = Site
         fields = ["link", "id"]
-        extra_kwargs = {"link": {"validators": []}}
 
     def validate_link(self, value):
         link = (

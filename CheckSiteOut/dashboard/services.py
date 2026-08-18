@@ -1,8 +1,11 @@
-from venv import logger
+import logging
+
 from django.db import transaction
 from users.tasks import send_report_message
 from .models import Site
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
+
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic

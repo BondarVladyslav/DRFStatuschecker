@@ -21,6 +21,8 @@ class DashBoardViewSet(
     def get_serializer_class(self):
         if self.action == "retrieve":
             return SiteDetailSerializer
+        if self.action == "responses":
+            return SiteResponseSerializer
         return SiteSerializer
 
     def get_queryset(self):

@@ -17,7 +17,7 @@ class Site(models.Model):
 class SiteResponse(models.Model):
     site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name="responses")
     status_code = models.PositiveSmallIntegerField(null=True, blank=True)
-    response_time = models.PositiveSmallIntegerField(null=True, blank=True)
+    response_time = models.PositiveIntegerField(null=True, blank=True)
     error = models.CharField(max_length=100, null=True, blank=True)
     checked_at = models.DateTimeField(auto_now_add=True)
 

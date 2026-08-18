@@ -33,8 +33,8 @@ class PollTokenApiView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [TokenPollThrottle]
 
-    def get(self, request):
-        token = request.query_params.get("token")
+    def post(self, request):
+        token = request.data.get("token")
 
         login_token = Token.objects.filter(
             token=token, created_at__gte=timezone.now() - timedelta(hours=1)

@@ -40,7 +40,7 @@ def site_check(self, site_id, link):
         start = time.time()
         response = requests.head(link, timeout=10)
         status_code = response.status_code
-        if status_code == 405:
+        if status_code in (403, 405, 501):
             start = time.time()
             response = requests.get(link, timeout=10, allow_redirects=False)
             status_code = response.status_code

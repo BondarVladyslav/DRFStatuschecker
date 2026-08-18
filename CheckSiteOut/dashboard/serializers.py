@@ -38,9 +38,7 @@ class SiteSerializer(ModelSerializer):
         link = base + sep + query
 
         URLValidator()(link)
-        hostname = urlsplit(link).hostname
-        if check_ip_blocked(hostname):
-            raise ValidationError("This host is not allowed.")
+
         return link
 
 

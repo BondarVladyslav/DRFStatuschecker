@@ -16,3 +16,4 @@ class Token(models.Model):
 
 class User(AbstractUser):
     telegram_id = models.BigIntegerField(unique=True)
+    REQUIRED_FIELDS = ("telegram_id",)

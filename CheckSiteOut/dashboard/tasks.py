@@ -3,8 +3,8 @@ import logging
 import socket
 from urllib.parse import urlsplit
 
-from .services import check_ip_blocked
-from dashboard.services import alert_all_owners
+from .ipadressresolving import check_ip_blocked
+from .exceptions import HostUnresolvable
 from users.models import Token
 from datetime import timedelta
 import time
@@ -13,6 +13,7 @@ from dashboard.models import Site, SiteResponse
 from CheckSiteOut.celery import app
 from users.tasks import send_report_message
 from django.utils import timezone
+from users.services import alert_all_owners
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +29,13 @@ def send_site_checking_task(self):
 @app.task(bind=True, max_retries=3)
 def site_check(self, site_id, link):
     response = None
-    site = Site.objects.get(id=site_id)
+    try:
+        site = Site.objects.get(id=site_id)
+    except Site.DoesNotExist:
+        logger.info("Site %s was deleted before check ran, skipping", site_id)
+        return
     last = SiteResponse.objects.filter(site_id=site_id).first()
     was_ok = not (last and last.error)
-
     try:
         if check_ip_blocked(urlsplit(link).hostname):
             SiteResponse.objects.create(site_id=site_id, error="BLOCKED_HOST")
@@ -51,34 +55,33 @@ def site_check(self, site_id, link):
         )
         if status_code >= 400:
             error = f"Bad status code {status_code}"
-
             if was_ok:
                 alert_all_owners(
                     site.owners.all(), link, became_avaible=False, error=error
                 )
-
             response_obj.error = error
             response_obj.save()
-
         else:
             if not was_ok:
                 alert_all_owners(site.owners.all(), link, became_avaible=True)
             response_obj.save()
 
-    except requests.exceptions.RequestException as error:
+    except (requests.exceptions.RequestException, HostUnresolvable) as error:
         if self.request.retries < self.max_retries:
             raise self.retry(exc=error, countdown=10)
         else:
-            error = (
-                "TIMEOUT"
-                if isinstance(error, requests.exceptions.Timeout)
-                else "CONNECTION_FAILED"
-            )
-            SiteResponse.objects.create(site_id=site_id, error=error)
+            if isinstance(error, HostUnresolvable):
+                error_code = "DNS_FAILED"
+            elif isinstance(error, requests.exceptions.Timeout):
+                error_code = "TIMEOUT"
+            else:
+                error_code = "CONNECTION_FAILED"
+            SiteResponse.objects.create(site_id=site_id, error=error_code)
             if was_ok:
                 alert_all_owners(
-                    site.owners.all(), link, became_avaible=False, error=error
+                    site.owners.all(), link, became_avaible=False, error=error_code
                 )
+
     finally:
         if self.request.retries == self.max_retries or (
             response is not None and response.status_code < 400

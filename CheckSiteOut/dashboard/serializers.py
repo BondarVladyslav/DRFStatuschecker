@@ -1,6 +1,7 @@
 from datetime import timedelta
 from urllib.parse import urlsplit
-from .services import check_ip_blocked
+from .ipadressresolving import check_ip_blocked
+from .exceptions import HostUnresolvable
 from django.db.models import Q
 from django.db.models.aggregates import Avg, Count
 from django.utils import timezone
@@ -36,7 +37,11 @@ class SiteSerializer(ModelSerializer):
             base += "/"
 
         link = base + sep + query
-
+        try:
+            if check_ip_blocked(urlsplit(link).hostname):
+                raise ValidationError("Host is not allowed")
+        except HostUnresolvable:
+            raise ValidationError("Host could not be resolved")
         URLValidator()(link)
 
         return link

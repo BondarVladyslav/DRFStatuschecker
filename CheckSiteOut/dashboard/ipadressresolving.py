@@ -1,10 +1,13 @@
 import ipaddress
 import socket
-
+import logging
+from contextlib import contextmanager
 from dashboard.exceptions import HostUnresolvable
 
+logger = logging.getLogger(__name__)
 
-def check_ip_blocked(host):
+
+def resolve_safe_ip(host):
     try:
         infos = socket.getaddrinfo(host, None)
     except socket.gaierror as exc:
@@ -20,5 +23,25 @@ def check_ip_blocked(host):
             or ip.is_reserved
             or ip.is_unspecified
         ):
-            return True
-    return False
+            return None
+    return infos[0][4][0]
+
+
+def check_ip_blocked(host):
+    return resolve_safe_ip(host) is None
+
+
+@contextmanager
+def pin_hostname_to_ip(hostname, ip):
+    real_getaddrinfo = socket.getaddrinfo
+
+    def pinned_getaddrinfo(host, *args, **kwargs):
+        if host == hostname:
+            host = ip
+        return real_getaddrinfo(host, *args, **kwargs)
+
+    socket.getaddrinfo = pinned_getaddrinfo
+    try:
+        yield
+    finally:
+        socket.getaddrinfo = real_getaddrinfo

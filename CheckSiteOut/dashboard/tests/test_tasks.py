@@ -12,6 +12,11 @@ def response_factory(status_code):
     response.status_code = status_code
     return response
 
+
+@pytest.fixture(autouse=True)
+def mock_dns_resolution(monkeypatch):
+    monkeypatch.setattr("dashboard.tasks.resolve_safe_ip", lambda hostname: "93.184.216.34")
+
 def test_saving_successful_response(site):
     with patch('dashboard.tasks.requests.head',
                return_value = response_factory(200)) as resp_mock:

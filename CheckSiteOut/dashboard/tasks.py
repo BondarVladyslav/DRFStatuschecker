@@ -1,11 +1,7 @@
-import ipaddress
 import logging
-import socket
 from urllib.parse import urlsplit
-
-from .ipadressresolving import check_ip_blocked
+from .ipadressresolving import resolve_safe_ip, pin_hostname_to_ip
 from .exceptions import HostUnresolvable
-from users.models import Token
 from datetime import timedelta
 import time
 import requests
@@ -28,32 +24,50 @@ def send_site_checking_task(self):
 
 @app.task(bind=True, max_retries=3)
 def site_check(self, site_id, link):
+
     response = None
+    is_retrying = False
+
     try:
+
         site = Site.objects.get(id=site_id)
+
     except Site.DoesNotExist:
-        logger.info("Site %s was deleted before check ran, skipping", site_id)
+
+        logger.info("Site %s was deleted while checking", site_id)
         return
+
     last = SiteResponse.objects.filter(site_id=site_id).first()
     was_ok = not (last and last.error)
+
     try:
-        if check_ip_blocked(urlsplit(link).hostname):
+
+        hostname = urlsplit(link).hostname
+        safe_ip = resolve_safe_ip(hostname)
+
+        if safe_ip is None:
             SiteResponse.objects.create(site_id=site_id, error="BLOCKED_HOST")
             return
 
-        start = time.time()
-        response = requests.head(link, timeout=10)
-        status_code = response.status_code
-        if status_code in (403, 405, 501):
+        with pin_hostname_to_ip(hostname, safe_ip):
+
             start = time.time()
-            response = requests.get(link, timeout=10, allow_redirects=False)
+            response = requests.head(link, timeout=10)
             status_code = response.status_code
+
+            if status_code in (403, 405, 501):
+                start = time.time()
+                response = requests.get(link, timeout=10, allow_redirects=False)
+                status_code = response.status_code
+
         response_obj = SiteResponse.objects.create(
             site_id=site_id,
             status_code=status_code,
             response_time=int((time.time() - start) * 1000),
         )
+
         if status_code >= 400:
+
             error = f"Bad status code {status_code}"
             if was_ok:
                 alert_all_owners(
@@ -61,31 +75,45 @@ def site_check(self, site_id, link):
                 )
             response_obj.error = error
             response_obj.save()
+
         else:
+
             if not was_ok:
                 alert_all_owners(site.owners.all(), link, became_avaible=True)
             response_obj.save()
 
     except (requests.exceptions.RequestException, HostUnresolvable) as error:
+
         if self.request.retries < self.max_retries:
+
+            is_retrying = True
             raise self.retry(exc=error, countdown=10)
+
         else:
+
             if isinstance(error, HostUnresolvable):
+
                 error_code = "DNS_FAILED"
+
             elif isinstance(error, requests.exceptions.Timeout):
+
                 error_code = "TIMEOUT"
+
             else:
+
                 error_code = "CONNECTION_FAILED"
+
             SiteResponse.objects.create(site_id=site_id, error=error_code)
+
             if was_ok:
                 alert_all_owners(
                     site.owners.all(), link, became_avaible=False, error=error_code
                 )
 
     finally:
-        if self.request.retries == self.max_retries or (
-            response is not None and response.status_code < 400
-        ):
+
+        if not is_retrying:
+
             site.checked_at = timezone.now()
             site.save()
 

@@ -8,12 +8,12 @@ User = get_user_model()
 
 @pytest.fixture
 def user(db):
-    return User.objects.create_user(username="tg_01")
+    return User.objects.create_user(username="tg_01", telegram_id=1)
 
 
 @pytest.fixture
 def second_user(db):
-    return User.objects.create_user(username="tg_02")
+    return User.objects.create_user(username="tg_02", telegram_id=2)
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def auth_client(user):
 
 @pytest.fixture
 def site(user):
-    site = Site.objects.create(link="test.link")
+    site = Site.objects.create(link="https://example.com/")
     site.owners.add(user)
     return site
 
